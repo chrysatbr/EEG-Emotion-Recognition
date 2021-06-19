@@ -1,0 +1,19 @@
+<productinfo>
+
+<matlabrelease>12</matlabrelease>
+<name>Higher-Order Spectral Analysis Toolbox</name>
+<type>matlab</type>
+<icon>$toolbox/matlab/general/matlabicon.gif</icon>
+
+<list>
+
+<listitem>
+<label>Documentation</label>
+<callback> eval(['web ''' which('hosa.pdf') ''' -browser']) ;</callback>
+<icon>$toolbox/matlab/general/bookicon.gif</icon>
+</listitem>
+
+</list>
+
+</productinfo>
+
