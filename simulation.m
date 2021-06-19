@@ -80,6 +80,8 @@ fprintf('Finished loading ...\n')
 motherWavelet = 'db5';
 numLevels = 5;
 
+%[C,L] = wavedec(X,N,Lo_D,Hi_D) returns the decomposition structure as above, given the low- and high-pass decomposition filters you specify
+
 [components,levels] = wavedec(fullsignal.samples,numLevels,motherWavelet);
 [gamma.coeff,beta.coeff,alpha.coeff,theta.coeff] = detcoef(components,levels,[1 2 3 4]);
 delta.coeff = appcoef(components,levels,motherWavelet);
