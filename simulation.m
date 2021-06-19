@@ -157,7 +157,6 @@ signalToTest = fullsignal;
 samples = signalToTest.samples;
 NFFT = nextpow2(numSamples);
 M = min(512,numSamples);
-rate = rate;
 overlap = 10;
 display = 1;
 
