@@ -13,9 +13,10 @@
 % 4. Computing the bands using 'wavedec' and plot the bispectrum ('HOSA' 
 % toolbox) for each one of them including the full fullsignal too.
 % 
-% 5. The original signal: 'fullsignal' and the bands:
-% 'delta','theta','alpha','beta','gamma' are structs with three members:
-% 1) samples, 2) rate and 3) number of samples (numSamples)
+% 5. The original signal: 'fullsignal' is a struct with 1 member:
+% 1) samples
+% The bands: 'delta','theta','alpha','beta','gamma' are structs with 3 members:
+% 1) coefficients, 2) samples in time domain, 3) level (DWT)
 
 clc;
 clear;
@@ -33,8 +34,8 @@ numParticipants = 32;
 numVideos = 40;
 numSignals = 40;
 numLabels = 4;
-fullsignal.rate = 256;
-fullsignal.numSamples = 8064;
+rate = 256;
+numSamples = 8064;
 fprintf('Finished set up .. \n\n')
 
 % Choose your data! Participant,video,electrode (channel)
@@ -80,49 +81,70 @@ motherWavelet = 'db5';
 numLevels = 5;
 
 [components,levels] = wavedec(fullsignal.samples,numLevels,motherWavelet);
-[gamma.samples,beta.samples,alpha.samples,theta.samples] = detcoef(components,levels,[1 2 3 4]);
-delta.samples = appcoef(components,levels,motherWavelet);
+[gamma.coeff,beta.coeff,alpha.coeff,theta.coeff] = detcoef(components,levels,[1 2 3 4]);
+delta.coeff = appcoef(components,levels,motherWavelet);
 
-gamma.rate = fullsignal.rate/2; gamma.numSamples = numel(gamma.samples);
-beta.rate  = gamma.rate/2; beta.numSamples = numel(beta.samples);
-alpha.rate = beta.rate/2; alpha.numSamples = numel(alpha.samples);
-theta.rate = alpha.rate/2; theta.numSamples = numel(theta.samples);
-delta.rate = theta.rate/2; delta.numSamples = numel(delta.samples);
-
+delta.level = 5; theta.level = 5; alpha.level = 4; beta.level = 3; gamma.level = 2;
 fprintf('Finished decomposition ...\n')
 
-%% DWT PLOTS
+%% DWT Coefficients
+figure
+subplot(5,1,1)
+plot(delta.coeff)
+axis tight; title('Delta (0-4 Hz)')
+
+subplot(5,1,2)
+plot(theta.coeff)
+axis tight; title('Theta (4-8 Hz)')
+
+subplot(5,1,3)
+plot(alpha.coeff)
+axis tight; title('Alpha (8-16 Hz)')
+
+subplot(5,1,4)
+plot(beta.coeff)
+axis tight; title('Beta (16-32 Hz)')
+
+subplot(5,1,5)
+plot(gamma.coeff)
+axis tight; title('Gamma (32-64 Hz)')
+suptitle(['Coefficients | Label: ' emotionQuarter])
+
+%% Reconstruct coefficients in time domain
+fprintf('Reconstructing wavelet coefficients ...\n')
+step = 1/rate; finish = step*(numSamples-1);
+
 figure
 subplot(6,1,1)
-step = 1/fullsignal.rate; finish = step*(fullsignal.numSamples-1);
 plot(0:step:finish,fullsignal.samples)
 axis tight; title('Original fullsignal')
 
 subplot(6,1,2)
-step = 1/delta.rate; finish = step*(delta.numSamples-1);
+delta.samples = wrcoef('a',components,levels,motherWavelet,delta.level);
 plot(0:step:finish,delta.samples)
 axis tight; title('Delta (0-4 Hz)')
 
 subplot(6,1,3)
-step = 1/theta.rate; finish = step*(theta.numSamples-1);
+theta.samples = wrcoef('d',components,levels,motherWavelet,theta.level);
 plot(0:step:finish,theta.samples)
 axis tight; title('Theta (4-8 Hz)')
 
 subplot(6,1,4)
-step = 1/theta.rate; finish = step*(alpha.numSamples-1);
+alpha.samples = wrcoef('d',components,levels,motherWavelet,alpha.level);
 plot(0:step:finish,alpha.samples)
 axis tight; title('Alpha (8-16 Hz)')
 
 subplot(6,1,5)
-step = 1/beta.rate; finish = step*(beta.numSamples-1);
+beta.samples = wrcoef('d',components,levels,motherWavelet,beta.level);
 plot(0:step:finish,beta.samples)
 axis tight; title('Beta (16-32 Hz)')
 
 subplot(6,1,6)
-step = 1/beta.rate; finish = step*(gamma.numSamples-1);
+gamma.samples = wrcoef('d',components,levels,motherWavelet,gamma.level);
 plot(0:step:finish,gamma.samples)
 axis tight; title('Gamma (32-64 Hz)')
-suptitle(['Label: ' emotionQuarter])
+suptitle(['Time domain | Label: ' emotionQuarter])
+fprintf('Finished reconstructing .. \n')
 
 %% Bispectrum Direct
 clc;
@@ -133,9 +155,9 @@ fprintf('Bispectrum Direct started ...\n')
 signalToTest = fullsignal;
 
 samples = signalToTest.samples;
-NFFT = nextpow2(signalToTest.numSamples);
-M = min(512,signalToTest.numSamples);
-rate = signalToTest.rate;
+NFFT = nextpow2(numSamples);
+M = min(512,numSamples);
+rate = rate;
 overlap = 10;
 display = 1;
 
