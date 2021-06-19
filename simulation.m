@@ -155,17 +155,16 @@ fprintf('Bispectrum Direct started ...\n')
 signalToTest = fullsignal;
 
 samples = signalToTest.samples;
-NFFT = nextpow2(numSamples);
-M = min(512,numSamples);
+M = fix(numSamples/16);
 overlap = 10;
 display = 1;
 
 tic
-[bispd, waxis] = bispecd(samples,NFFT,0,M,rate,overlap,display);
+[bispd, waxis] = bispecd(samples,'nfft',0,M,rate,overlap,display);
 toc
 
 tic
-[bicod, waxis] = bicoher(samples,NFFT,0,M,0);
+[bicod, waxis] = bicoher(samples,'nfft',0,M,0);
 toc
 
 fprintf('Bispectrum Direct finished ...\nWaiting for the plots ...\n')
