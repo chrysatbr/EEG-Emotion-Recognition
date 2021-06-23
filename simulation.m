@@ -1,6 +1,6 @@
 %% VISUAL ANALYSIS
 %
-% Notes:
+% NOTES:
 % 1. Since we are dealing with large files, instead of reading the samples all
 % at once, we can work per participant extracting the features. 
 %
@@ -9,14 +9,6 @@
 % 'idParticipant', 'idVideo', 'idChannel'
 %
 % 3. No usage of EEGLAB, TEAP toolboxes
-%
-% 4. Computing the bands using 'wavedec' and plot the bispectrum ('HOSA' 
-% toolbox) for each one of them including the full fullsignal too.
-% 
-% 5. The original signal: 'fullsignal' is a struct with 1 member:
-% 1) samples
-% The bands: 'delta','theta','alpha','beta','gamma' are structs with 3 members:
-% 1) coefficients, 2) samples in time domain, 3) level (DWT)
 
 clc;
 clear;
@@ -28,125 +20,61 @@ fprintf('The path of the database: "%s"\n', databasePath)
 
 % setting the path
 rootDir = fileparts(matlab.desktop.editor.getActiveFilename);
-addpath(genpath(rootDir));
+eval(['cd ' rootDir])
+addpath(genpath([rootDir '/lib']));
+addpath(genpath([rootDir '/utils']));
 
-numParticipants = 32;
-numVideos = 40;
-numSignals = 40;
-numLabels = 4;
 rate = 256;
 numSamples = 8064;
-fprintf('Finished set up .. \n\n')
 
-% Choose your data! Participant,video,electrode (channel)
-idParticipant = 2;
-idVideo = 1;
-% USAGE: "idChannel.Fp1" gets the Fp1 electrode data
+% Electrodes
 electrodes = struct('Fp1',1,'AF3',2,'F3',3,'F7',4,'FC5',5,'FC1',6,'C3',7,'T7',8,'CP5',9, ...
     'CP1',10,'P3',11,'P7',12,'PO3',13,'O1',14,'Oz',15,'Pz',16,'Fp2',17,'AF4',18, ...
     'Fz',19,'F4',20,'F8',21,'FC6',22,'FC2',23,'Cz',24,'C4',25,'T8',26,'CP6',27, ...
     'CP2',28, 'P4',29,'P8',30,'PO4',31,'O2',32,'hEOG',33,'vEOG',34,'zEMG',35, ...
     'tEMG',36,'GSR',37,'RESP',38,'BVP',39,'HST',40);
 electrodesString = string(fieldnames(electrodes));
-% to change electrodes, change the member of the struct e.g. electrodes.F8
-idChannel = electrodes.Fp1; 
+fprintf('Finished ...\n')
 
-fprintf('Loading participant: %d/32\n',idParticipant)
-if idParticipant<10 
-    matName = ['s0' int2str(idParticipant) '.mat'];
-else
-    matName = ['s'  int2str(idParticipant) '.mat'];
-end
-participant = load([databasePath matName]);
-fullsignal.samples = squeeze(participant.data(idVideo,idChannel,:));
-valence = participant.labels(idVideo,1);
-arousal = participant.labels(idVideo,2);
-fprintf("Video ID: %d\nChannel: %s\n",idVideo,electrodesString(idChannel));
+%% Single Analysis 
+% Choose your data! Participant,video,electrode (channel)
+idParticipant = 2;
+idVideo = 1;
+% to change electrodes, change the member of the struct e.g. 'electrodes.F8'
+idChannel = electrodes.Fp1;
 
-% Classify emotional regions
-if valence<5 && arousal<5 
-    emotionQuarter = 'LVLA';
-elseif valence<5 && arousal>5
-    emotionQuarter = 'LVHA';
-elseif valence>5 && arousal<5
-    emotionQuarter = 'HVLA';
-elseif valence>5 && arousal>5
-    emotionQuarter = 'HVHA';
-end
-fprintf('Emotion Label: %s\n',emotionQuarter)
-fprintf('Finished loading ...\n')
-
-% Discrete Wavelet Decomposition
-motherWavelet = 'db5';
-numLevels = 5;
-
-%[C,L] = wavedec(X,N,Lo_D,Hi_D) returns the decomposition structure as above, given the low- and high-pass decomposition filters you specify
-
-[components,levels] = wavedec(fullsignal.samples,numLevels,motherWavelet);
-[gamma.coeff,beta.coeff,alpha.coeff,theta.coeff] = detcoef(components,levels,[1 2 3 4]);
-delta.coeff = appcoef(components,levels,motherWavelet);
-
-delta.level = 5; theta.level = 5; alpha.level = 4; beta.level = 3; gamma.level = 2;
-fprintf('Finished decomposition ...\n')
+% Choose your data! Participant,video,electrode (channel)
+fprintf('Start loading and wavelet decomposition... \n')
+[fullsignal,bands] = loadAndDecomposeDEAP(databasePath,idParticipant,idVideo,idChannel);
+gamma = bands(1); beta= bands(2); alpha = bands(3); theta = bands(4); delta = bands(5);
+fprintf('Finished loading and decomposing ...\n\n')
+fprintf('Participant ID: %d\nVideo ID: %d\nChannel: %s\n',idParticipant,idVideo,electrodesString(idChannel));
+fprintf('Emotion Label: %s\n',fullsignal.label)
 
 %% DWT Coefficients
+titleDescription = {'Gamma (32-64 Hz)' 'Beta (16-32 Hz)' 'Alpha (8-16 Hz)' 'Theta (4-8 Hz)' 'Delta (0-4 Hz)'};
 figure
-subplot(5,1,1)
-plot(delta.coeff)
-axis tight; title('Delta (0-4 Hz)')
-
-subplot(5,1,2)
-plot(theta.coeff)
-axis tight; title('Theta (4-8 Hz)')
-
-subplot(5,1,3)
-plot(alpha.coeff)
-axis tight; title('Alpha (8-16 Hz)')
-
-subplot(5,1,4)
-plot(beta.coeff)
-axis tight; title('Beta (16-32 Hz)')
-
-subplot(5,1,5)
-plot(gamma.coeff)
-axis tight; title('Gamma (32-64 Hz)')
-suptitle(['Coefficients | Label: ' emotionQuarter])
+for i = 1:1:5
+    subplot(5,1,i)
+    plot(bands(i).coeff)
+    axis tight; title(titleDescription(i))
+end
+sgtitle(['Brain Rythms DWT Coefficients | Label: ' fullsignal.label])
 
 %% Reconstruct coefficients in time domain
-fprintf('Reconstructing wavelet coefficients ...\n')
 step = 1/rate; finish = step*(numSamples-1);
-
+titleDescription = {'Original full signal' 'Gamma (32-64 Hz)' 'Beta (16-32 Hz)' 'Alpha (8-16 Hz)' 'Theta (4-8 Hz)' 'Delta (0-4 Hz)'};
 figure
-subplot(6,1,1)
-plot(0:step:finish,fullsignal.samples)
-axis tight; title('Original fullsignal')
-
-subplot(6,1,2)
-delta.samples = wrcoef('a',components,levels,motherWavelet,delta.level);
-plot(0:step:finish,delta.samples)
-axis tight; title('Delta (0-4 Hz)')
-
-subplot(6,1,3)
-theta.samples = wrcoef('d',components,levels,motherWavelet,theta.level);
-plot(0:step:finish,theta.samples)
-axis tight; title('Theta (4-8 Hz)')
-
-subplot(6,1,4)
-alpha.samples = wrcoef('d',components,levels,motherWavelet,alpha.level);
-plot(0:step:finish,alpha.samples)
-axis tight; title('Alpha (8-16 Hz)')
-
-subplot(6,1,5)
-beta.samples = wrcoef('d',components,levels,motherWavelet,beta.level);
-plot(0:step:finish,beta.samples)
-axis tight; title('Beta (16-32 Hz)')
-
-subplot(6,1,6)
-gamma.samples = wrcoef('d',components,levels,motherWavelet,gamma.level);
-plot(0:step:finish,gamma.samples)
-axis tight; title('Gamma (32-64 Hz)')
-suptitle(['Time domain | Label: ' emotionQuarter])
-fprintf('Finished reconstructing .. \n')
+for i = 1:1:6
+    subplot(6,1,i)
+    if i == 1 
+        plot(fullsignal.samples)
+    else
+        plot(bands(i-1).samples)
+    end
+    axis tight; title(titleDescription(i))
+end
+sgtitle(['Brain Rythms Time domain | Label: ' fullsignal.label])
 
 %% Bispectrum Direct
 clc;
@@ -170,3 +98,76 @@ tic
 toc
 
 fprintf('Bispectrum Direct finished ...\nWaiting for the plots ...\n')
+
+%% Bulk Analysis Per Participant Full Signal Bispectrum Direct
+% 
+% NOTES:
+% 1. This would probably take a long time! Here we will try to implement a
+% brute force visualization. Trying to create a canvas of 40x32 plots,
+% plotting the direct bispectrum of the EEG signals (full signal, not rythms)
+% for all the channel per participant. The goal is to spot something interesting!
+% 
+% 2. In the root directory, a "plots" directory will be created that will
+% contain 40 figures that each one depict the bispectrum for all the EEG
+% channels
+%
+% 3. Avoid running this section. You could use the above single
+% visualization methods.
+
+clc;
+
+idParticipant = 2;
+fprintf('Bulk visualization per participant with id: %d ... \n',idParticipant)
+
+% create folders to save plots
+eval('mkdir plots')
+participantDir = sprintf('participant_%d',idParticipant);
+eval(['mkdir plots/' participantDir])
+
+M = fix(numSamples/16);
+overlap = 10;
+numVideo = 40;
+numChannels = 32;
+
+tic
+for idVideo = 1:numVideo
+    %f = figure;
+    f = figure('visible','off');
+    set(gcf, 'Position', get(0, 'Screensize')); % maximize figure
+    count = 1;
+    fprintf('Channels:\n')
+    for idChannel = 1:numChannels
+        fprintf('%d,',idChannel)
+        [fullsignal,bands] = loadAndDecomposeDEAP(databasePath,idParticipant,idVideo,idChannel);
+        clear waxis bands
+        [bisp, waxis,zeroPos] = bispecd(fullsignal.samples,'nfft',0,M,rate,overlap,0);
+        clear fullsignals bands magnBisp
+        magnBisp = abs(bisp(zeroPos:end,zeroPos:end));
+        clear bisp
+        
+        % plot
+        subplot(4,8,count)
+        mesh(waxis(zeroPos:end),waxis(zeroPos:end),magnBisp); grid on
+        
+        % find peak and create datatip (todo)
+        [row,col,value] = maxMatrix(magnBisp);
+        x = waxis(row+zeroPos-1);
+        y = waxis(col+zeroPos-1);
+        z = magnBisp(row,col);
+        
+        titleHandler = title(sprintf('%d,%s(%d)\n(%0.1f,%0.1f,%0.2f)', ...
+            idVideo,electrodesString(idChannel),idChannel,x,y,z));
+        titleHandler.FontSize = 8;
+        
+        count = count+1;
+    end
+    fprintf('\nVideo ID: %d | Emotion Label: %s\n',idVideo,fullsignal.label)
+    text = sprintf('Participant ID: %d | Video ID: %d | Emotion Label: %s\n',idParticipant,idVideo,fullsignal.label);
+    sgtitle(text);
+    
+    fileName = sprintf('bispecd_video%d',idVideo);
+    fullpath = ['plots/' participantDir '/' fileName];
+    print(f,fullpath,'-dpng','-r150')
+    clf(f)
+end
+toc

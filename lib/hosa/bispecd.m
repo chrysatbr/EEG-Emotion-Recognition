@@ -1,4 +1,4 @@
-function [Bspec,waxis] = bispecd (y,  nfft, wind, nsamp, fs, overlap, display)
+function [Bspec,waxis,zeroPos] = bispecd (y,  nfft, wind, nsamp, fs, overlap, display)
 %BISPECD Bispectrum estimation using the direct (fft-based) approach.
 %	[Bspec,waxis] = bispecd (y,  nfft, wind, segsamp, overlap)
 %	y    - data vector or time-series
@@ -18,6 +18,7 @@ function [Bspec,waxis] = bispecd (y,  nfft, wind, nsamp, fs, overlap, display)
 %	          at the center, and axes pointing down and to the right.
 %	waxis   - vector of frequencies associated with the rows and columns
 %	          of Bspec;  sampling frequency is assumed to be 1.
+%   zeroPos - The position of the origin of waxis and Bspec
 
 %  Copyright (c) 1991-2001 by United Signals & Systems, Inc.
 %       $Revision: 1.8 $
@@ -145,8 +146,10 @@ end
 
    if (rem(nfft,2) == 0)
        waxis = [-nfft/2:(nfft/2-1)]'*fs/nfft;
+       zeroPos = nfft/2+1;
    else
        waxis = [-(nfft-1)/2:(nfft-1)/2]'*fs/nfft;
+       zeroPos = nfft/2;
    end
 
    if display ~= 0
@@ -155,14 +158,14 @@ end
     %  contour(abs(Bspec),4,waxis,waxis),grid
        subplot(211);
        hold on;
-       plot(waxis(nfft/2:end), waxis(nfft/2:end), 'color', 'red');
-       contour(waxis(nfft/2:end),waxis(nfft/2:end), ...
-           abs(Bspec(nfft/2:end, nfft/2:end)),20),grid on 
+       plot(waxis(zeroPos:end), waxis(zeroPos:end), 'color', 'red');
+       contour(waxis(zeroPos:end),waxis(zeroPos:end), ...
+           abs(Bspec(zeroPos:end, zeroPos:end)),20),grid on 
        title('Bispectrum estimated via the direct (FFT) method')
        xlabel('f1'), ylabel('f2')
        subplot(212);
-       mesh(waxis((nfft)/2:end),waxis((nfft)/2:end),...
-           abs(Bspec((nfft)/2:end, (nfft)/2:end))),grid on 
+       mesh(waxis(zeroPos:end),waxis(zeroPos:end),...
+           abs(Bspec(zeroPos:end, zeroPos:end))),grid on 
        xlabel('f1'), ylabel('f2')
        set(gcf,'Name','Hosa BISPECD')
    end
