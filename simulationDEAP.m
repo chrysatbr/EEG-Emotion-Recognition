@@ -1,23 +1,14 @@
-%% VISUAL ANALYSIS
-%
-% NOTES:
-% 1. Since we are dealing with large files, instead of reading the samples all
-% at once, we can work per participant extracting the features. 
-%
-% 2. Currently, the analysis is based on visualization plots, so only one
-% EEG fullsignal is analyzed. The fullsignal is determined by the variables:
-% 'idParticipant', 'idVideo', 'idChannel'
-%
-% 3. No usage of EEGLAB, TEAP toolboxes
+%% SETUP
 
 clc;
 clear;
 %close all;
 
 % Replace the path of the database with your local path
-databasePath = 'D:\Downloads\databases\deap\data_preprocessed_matlab\';
-fprintf('The path of the database: "%s"\n', databasePath)
+deapPath = 'D:\Downloads\databases\deap\data_preprocessed_matlab\';
+fprintf('The path of the database: "%s"\n', deapPath)
 
+% add directoris 'utils' and 'libs' to path
 % setting the path
 rootDir = fileparts(matlab.desktop.editor.getActiveFilename);
 eval(['cd ' rootDir])
@@ -34,22 +25,22 @@ electrodes = struct('Fp1',1,'AF3',2,'F3',3,'F7',4,'FC5',5,'FC1',6,'C3',7,'T7',8,
     'CP2',28, 'P4',29,'P8',30,'PO4',31,'O2',32,'hEOG',33,'vEOG',34,'zEMG',35, ...
     'tEMG',36,'GSR',37,'RESP',38,'BVP',39,'HST',40);
 electrodesString = string(fieldnames(electrodes));
-fprintf('Finished ...\n')
 
-%% Single Analysis 
+%% DEAP Load Single Analysis
 % Choose your data! Participant,video,electrode (channel)
-idParticipant = 2;
+idParticipant = 1;
 idVideo = 1;
 % to change electrodes, change the member of the struct e.g. 'electrodes.F8'
-idChannel = electrodes.Fp1;
+idChannel = electrodes.T7;
 
 % Choose your data! Participant,video,electrode (channel)
 fprintf('Start loading and wavelet decomposition... \n')
-[fullsignal,bands] = loadAndDecomposeDEAP(databasePath,idParticipant,idVideo,idChannel);
+[fullsignal,bands] = loadAndDecomposeDEAP(deapPath,idParticipant,idVideo,idChannel);
 gamma = bands(1); beta= bands(2); alpha = bands(3); theta = bands(4); delta = bands(5);
 fprintf('Finished loading and decomposing ...\n\n')
 fprintf('Participant ID: %d\nVideo ID: %d\nChannel: %s\n',idParticipant,idVideo,electrodesString(idChannel));
 fprintf('Emotion Label: %s\n',fullsignal.label)
+
 
 %% DWT Coefficients
 titleDescription = {'Gamma (32-64 Hz)' 'Beta (16-32 Hz)' 'Alpha (8-16 Hz)' 'Theta (4-8 Hz)' 'Delta (0-4 Hz)'};
@@ -62,15 +53,15 @@ end
 sgtitle(['Brain Rythms DWT Coefficients | Label: ' fullsignal.label])
 
 %% Reconstruct coefficients in time domain
-step = 1/rate; finish = step*(numSamples-1);
+step = 1/rate; finish = step*(numel(fullsignal.samples)-1);
 titleDescription = {'Original full signal' 'Gamma (32-64 Hz)' 'Beta (16-32 Hz)' 'Alpha (8-16 Hz)' 'Theta (4-8 Hz)' 'Delta (0-4 Hz)'};
 figure
 for i = 1:1:6
     subplot(6,1,i)
     if i == 1 
-        plot(fullsignal.samples)
+        plot(0:step:finish,fullsignal.samples)
     else
-        plot(bands(i-1).samples)
+        plot(0:step:finish,bands(i-1).samples)
     end
     axis tight; title(titleDescription(i))
 end
@@ -94,7 +85,7 @@ tic
 toc
 
 tic
-[bicod, waxis] = bicoher(samples,'nfft',0,M,0);
+%[bicod, waxis] = bicoher(samples,'nfft',0,M,0);
 toc
 
 fprintf('Bispectrum Direct finished ...\nWaiting for the plots ...\n')
@@ -141,7 +132,7 @@ for idVideo = 1:numVideo
         [fullsignal,bands] = loadAndDecomposeDEAP(databasePath,idParticipant,idVideo,idChannel);
         clear waxis bands
         [bisp, waxis,zeroPos] = bispecd(fullsignal.samples,'nfft',0,M,rate,overlap,0);
-        clear fullsignals bands magnBisp
+        clear fullsignals magnBisp
         magnBisp = abs(bisp(zeroPos:end,zeroPos:end));
         clear bisp
         
