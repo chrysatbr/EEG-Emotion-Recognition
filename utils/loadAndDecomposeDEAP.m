@@ -2,6 +2,9 @@ function [fullsignal,bands] =  loadAndDecomposeDEAP(databasePath,idParticipant,i
 
 % loadAndDecomposeDEAP Loading data and signal decomposition for DEAP
 % 
+% Description of input data structure:
+% https://www.eecs.qmul.ac.uk/mmv/datasets/deap/readme.html
+%
 % Loading data per pariticipant from the DEAP dataset and decomposing the 
 % obtained signal, using wavelets, to frequency bands that correspond to 
 % the brain rythms
