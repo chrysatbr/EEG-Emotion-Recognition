@@ -1,4 +1,4 @@
-function [bic,waxis] = bicoher (y,  nfft, wind, nsamp, overlap)
+function [bic,waxis,zeroPos] = bicoher (y,  nfft, wind, nsamp, fs, overlap, display)
 %BICOHER - Direct (FD) method for estimating bicoherence
 %	[bic,waxis] = bicoher (y,  nfft, wind, segsamp, overlap)
 %	y     - data vector or time-series
@@ -74,10 +74,10 @@ function [bic,waxis] = bicoher (y,  nfft, wind, nsamp, overlap)
 
     for k = 1:nrecs
         ys = y(ind);
-	ys = (ys(:) - mean(ys)) .* wind;
-	Yf = fft(ys,nfft)  / nsamp;
+        ys = (ys(:) - mean(ys)) .* wind;
+        Yf = fft(ys,nfft)  / nsamp;
         CYf     = conj(Yf);
-	Pyy     = Pyy + Yf .* CYf;
+        Pyy     = Pyy + Yf .* CYf;
         Yf12(:) = CYf(mask);
         bic = bic + (Yf * Yf.') .* Yf12;
         ind = ind + nadvance;
@@ -92,23 +92,39 @@ function [bic,waxis] = bicoher (y,  nfft, wind, nsamp, overlap)
 % ------------ contout plot of magnitude bispectum --------------------
 
    if (rem(nfft,2) == 0)
-       waxis = [-nfft/2:(nfft/2-1)]'/nfft;
+       waxis = [-nfft/2:(nfft/2-1)]'*fs/nfft;
+       zeroPos = nfft/2+1;
    else
-       waxis = [-(nfft-1)/2:(nfft-1)/2]'/nfft;
+       waxis = [-(nfft-1)/2:(nfft-1)/2]'*fs/nfft;
+       zeroPos = nfft/2;
    end
 
-   figure
-   hold off, clf
-%   contour(bic,4,waxis,waxis),grid
-   contour(waxis,waxis,bic,10), grid on 
-   title('Bicoherence estimated via the direct (FFT) method')
-   xlabel('f1'), ylabel('f2')
-   set(gcf,'Name','Hosa BICOHER')
-
+   if display ~= 0
+       figure
+       hold off, clf
+       %contour(bic,4,waxis,waxis),grid
+       %contour(waxis,waxis,bic,10), grid on 
+       subplot(211);
+       hold on;
+       plot(waxis(zeroPos:end), waxis(zeroPos:end), 'color', 'red');
+       contour(waxis(zeroPos:end),waxis(zeroPos:end), ...
+       abs(bic(zeroPos:end, zeroPos:end)),20),grid on 
+       xlabel('f1'), ylabel('f2')
+       subplot(212);
+       mesh(waxis(zeroPos:end),waxis(zeroPos:end),...
+           abs(bic(zeroPos:end, zeroPos:end))),grid on 
+       xlabel('f1'), ylabel('f2')
+       
+       title('Bicoherence estimated via the direct (FFT) method')
+       xlabel('f1'), ylabel('f2')
+       set(gcf,'Name','Hosa BICOHER')
+   end
+   
+   
    [colmax,row] = max(bic)  ;
    [maxval,col] = max(colmax);
    row = row(col);
    disp(['Max: bic(',num2str(waxis(row)),',',num2str(waxis(col)),') = ', ...
           num2str(maxval) ])
-
+    
 return

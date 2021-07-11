@@ -22,10 +22,10 @@ rate = 200;
 %electrodes = struct()
 
 %% SEED Load Single Analysis
-idParticipant = 1;  % range 1-15
-idSession = 1;      % range 1-3
-idVideo = 3;        % range 1-15
-idChannel = 1;      % range 1-62
+idParticipant = 10;  % range 1-15
+idSession = 3;      % range 1-3
+idVideo = 7;        % range 1-15
+idChannel = 60;      % range 1-62
 [fullsignal,bands] = loadAndDecomposeSEED(seedPath,idParticipant,idSession,idVideo,idChannel);
 gamma = bands(1); beta= bands(2); alpha = bands(3); theta = bands(4); delta = bands(5);
 
@@ -55,24 +55,33 @@ end
 sgtitle(['Brain Rythms Time domain | Label: ' fullsignal.label])
 
 %% Bispectrum Direct
-clc;
+%clc;
 fprintf('Bispectrum Direct started ...\n')
 
-% Available options to pass: 
+% Available options to pass:
 % 'fullsignal','gamma','beta','alpha','theta','delta' 
 signalToTest = fullsignal;
 
 samples = signalToTest.samples;
-M = fix(numel(signalToTest.samples)/16);
+M = fix(numel(signalToTest.samples)/16)
+nfft = 2^nextpow2(M);
+freqBins = rate/(2^nextpow2(M))
 overlap = 10;
 display = 1;
 
 tic
-[bispd, waxis] = bispecd(samples,'nfft',0,M,rate,overlap,display);
+[bispd, waxis] = bispecd(samples,nfft,5,M,rate,overlap,display);
 toc
 
 tic
-%[bicod, waxis] = bicoher(samples,'nfft',0,M,0);
+%[bicod, waxis] = bicoher(samples,nfft,0,M,rate,overlap,display);
 toc
+
+% frequency spectrum
+% nfft = 2^nextpow2(numel(samples))
+% psd = abs(fftshift(fft(samples)));
+% fshift = [-nfft/2:nfft/2-1]'*rate/nfft;
+% figure
+% plot(fshift,psd);
 
 fprintf('Bispectrum Direct finished ...\nWaiting for the plots ...\n')

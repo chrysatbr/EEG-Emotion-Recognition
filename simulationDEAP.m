@@ -15,7 +15,7 @@ eval(['cd ' rootDir])
 addpath(genpath([rootDir '/lib']));
 addpath(genpath([rootDir '/utils']));
 
-rate = 256;
+rate = 128;
 numSamples = 8064;
 
 % Electrodes
@@ -28,15 +28,15 @@ electrodesString = string(fieldnames(electrodes));
 
 %% DEAP Load Single Analysis
 % Choose your data! Participant,video,electrode (channel)
-idParticipant = 1;
+idParticipant = 2;
 idVideo = 1;
 % to change electrodes, change the member of the struct e.g. 'electrodes.F8'
-idChannel = electrodes.T7;
+idChannel = electrodes.Fp1;
 
 % Choose your data! Participant,video,electrode (channel)
 fprintf('Start loading and wavelet decomposition... \n')
 [fullsignal,bands] = loadAndDecomposeDEAP(deapPath,idParticipant,idVideo,idChannel);
-gamma = bands(1); beta= bands(2); alpha = bands(3); theta = bands(4); delta = bands(5);
+gamma = bands{1}; beta= bands{2}; alpha = bands{3}; theta = bands{4}; delta = bands{5};
 fprintf('Finished loading and decomposing ...\n\n')
 fprintf('Participant ID: %d\nVideo ID: %d\nChannel: %s\n',idParticipant,idVideo,electrodesString(idChannel));
 fprintf('Emotion Label: %s\n',fullsignal.label)
@@ -47,7 +47,7 @@ titleDescription = {'Gamma (32-64 Hz)' 'Beta (16-32 Hz)' 'Alpha (8-16 Hz)' 'Thet
 figure
 for i = 1:1:5
     subplot(5,1,i)
-    plot(bands(i).coeff)
+    plot(bands{i}.coeff)
     axis tight; title(titleDescription(i))
 end
 sgtitle(['Brain Rythms DWT Coefficients | Label: ' fullsignal.label])
@@ -61,14 +61,14 @@ for i = 1:1:6
     if i == 1 
         plot(0:step:finish,fullsignal.samples)
     else
-        plot(0:step:finish,bands(i-1).samples)
+        plot(0:step:finish,bands{i-1}.samples)
     end
     axis tight; title(titleDescription(i))
 end
 sgtitle(['Brain Rythms Time domain | Label: ' fullsignal.label])
 
 %% Bispectrum Direct
-clc;
+%clc;
 fprintf('Bispectrum Direct started ...\n')
 
 % Available options to pass: 
@@ -76,17 +76,27 @@ fprintf('Bispectrum Direct started ...\n')
 signalToTest = fullsignal;
 
 samples = signalToTest.samples;
-M = fix(numSamples/16);
+M = fix(numel(samples)/16);
+nfft = 2^nextpow2(M);
+freqBins = rate/2^(nextpow2(M))
 overlap = 10;
 display = 1;
 
 tic
-[bispd, waxis] = bispecd(samples,'nfft',0,M,rate,overlap,display);
+[bispd, waxis] = bispecd(samples,nfft,0,M,rate,overlap,display);
 toc
 
 tic
-%[bicod, waxis] = bicoher(samples,'nfft',0,M,0);
+%[bicod, waxis] = bicoher(samples,nfft,0,M,rate,overlap,display);
 toc
+
+% frequency spectrum
+% nfft = 2^nextpow2(numel(samples))
+% psd = abs(fftshift(fft(samples)));
+% fshift = [-nfft/2:nfft/2-1]'*rate/nfft;
+% figure
+% plot(fshift,psd);
+
 
 fprintf('Bispectrum Direct finished ...\nWaiting for the plots ...\n')
 
