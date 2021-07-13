@@ -183,6 +183,8 @@ end
 toc
 
 %% Histogram
+% We want to extract results about peaks (concentrated or diffuse)
+%There is no difference in the frequency pair observed in coupling (?)
 clc;
 
 M = fix(numSamples/16);
