@@ -86,6 +86,8 @@ tic
 [bispd, waxis] = bispecd(samples,nfft,0,M,rate,overlap,display);
 toc
 
+%% PROBLEM: expected normalized bispectrum bounded 0-1 z axis but there is frequency incosistency with bispectrum 
+
 %tic
 %[bicod, waxis] = bicoher(samples,nfft,0,M,rate,overlap,display);
 %toc
