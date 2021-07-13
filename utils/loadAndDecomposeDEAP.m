@@ -41,13 +41,13 @@ arousal = participant.labels(idVideo,2);
 
 % Classify emotional regions
 if valence<=5 && arousal<=5 
-    emotionQuarter = 'LVLA';
+    emotionQuarter = "LVLA";
 elseif valence<=5 && arousal>=5
-    emotionQuarter = 'LVHA';
+    emotionQuarter = "LVHA";
 elseif valence>=5 && arousal<=5
-    emotionQuarter = 'HVLA';
+    emotionQuarter = "HVLA";
 elseif valence>=5 && arousal>=5
-    emotionQuarter = 'HVHA';
+    emotionQuarter = "HVHA";
 else
     fprintf('ERROR: Invalid emotional region\n')
 end

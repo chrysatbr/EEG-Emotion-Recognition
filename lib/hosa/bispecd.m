@@ -160,7 +160,7 @@ end
        hold on;
        plot(waxis(zeroPos:end), waxis(zeroPos:end), 'color', 'red');
        contour(waxis(zeroPos:end),waxis(zeroPos:end), ...
-           abs(Bspec(zeroPos:end, zeroPos:end)),20),grid on 
+           abs(Bspec(zeroPos:end, zeroPos:end)),8),grid on 
        title('Bispectrum estimated via the direct (FFT) method')
        xlabel('f1'), ylabel('f2')
        subplot(212);

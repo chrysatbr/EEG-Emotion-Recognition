@@ -28,7 +28,7 @@ electrodesString = string(fieldnames(electrodes));
 
 %% DEAP Load Single Analysis
 % Choose your data! Participant,video,electrode (channel)
-idParticipant = 2;
+idParticipant = 1;
 idVideo = 1;
 % to change electrodes, change the member of the struct e.g. 'electrodes.F8'
 idChannel = electrodes.Fp1;
@@ -86,9 +86,9 @@ tic
 [bispd, waxis] = bispecd(samples,nfft,0,M,rate,overlap,display);
 toc
 
-tic
+%tic
 %[bicod, waxis] = bicoher(samples,nfft,0,M,rate,overlap,display);
-toc
+%toc
 
 % frequency spectrum
 % nfft = 2^nextpow2(numel(samples))
@@ -117,18 +117,24 @@ fprintf('Bispectrum Direct finished ...\nWaiting for the plots ...\n')
 
 clc;
 
-idParticipant = 2;
+idParticipant = 5;
 fprintf('Bulk visualization per participant with id: %d ... \n',idParticipant)
 
 % create folders to save plots
 eval('mkdir plots')
-participantDir = sprintf('participant_%d',idParticipant);
+participantDir = sprintf('participant_%d/bispectrum',idParticipant);
 eval(['mkdir plots/' participantDir])
+eval(['mkdir plots/' participantDir '/HVHA'])
+eval(['mkdir plots/' participantDir '/LVHA'])
+eval(['mkdir plots/' participantDir '/HVLA'])
+eval(['mkdir plots/' participantDir '/LVLA'])
 
 M = fix(numSamples/16);
-overlap = 10;
-numVideo = 40;
-numChannels = 32;
+freqBins = rate/2^(nextpow2(M))
+overlap = 10
+
+numVideo = 40;    % max 40
+numChannels = 32; % max 32
 
 tic
 for idVideo = 1:numVideo
@@ -139,36 +145,134 @@ for idVideo = 1:numVideo
     fprintf('Channels:\n')
     for idChannel = 1:numChannels
         fprintf('%d,',idChannel)
-        [fullsignal,bands] = loadAndDecomposeDEAP(databasePath,idParticipant,idVideo,idChannel);
+        [fullsignal,bands] = loadAndDecomposeDEAP(deapPath,idParticipant,idVideo,idChannel);
+        emotionLabel = fullsignal.label;
         clear waxis bands
         [bisp, waxis,zeroPos] = bispecd(fullsignal.samples,'nfft',0,M,rate,overlap,0);
-        clear fullsignals magnBisp
+        clear fullsignal magnBisp
         magnBisp = abs(bisp(zeroPos:end,zeroPos:end));
         clear bisp
         
         % plot
         subplot(4,8,count)
-        mesh(waxis(zeroPos:end),waxis(zeroPos:end),magnBisp); grid on
+        meshTarget = mesh(waxis(zeroPos:end),waxis(zeroPos:end),magnBisp); grid on
         
-        % find peak and create datatip (todo)
+        % find peak
         [row,col,value] = maxMatrix(magnBisp);
         x = waxis(row+zeroPos-1);
         y = waxis(col+zeroPos-1);
         z = magnBisp(row,col);
         
-        titleHandler = title(sprintf('%d,%s(%d)\n(%0.1f,%0.1f,%0.2f)', ...
+        titleHandler = title(sprintf('%d,%s(%d)\n(%0.2f,%0.2f,%0.2f)', ...
             idVideo,electrodesString(idChannel),idChannel,x,y,z));
         titleHandler.FontSize = 8;
         
         count = count+1;
     end
-    fprintf('\nVideo ID: %d | Emotion Label: %s\n',idVideo,fullsignal.label)
-    text = sprintf('Participant ID: %d | Video ID: %d | Emotion Label: %s\n',idParticipant,idVideo,fullsignal.label);
+    fprintf('\nVideo ID: %d | Emotion Label: %s\n',idVideo,emotionLabel)
+    text = sprintf('Participant ID: %d | Video ID: %d | Emotion Label: %s\n',idParticipant,idVideo,emotionLabel);
     sgtitle(text);
     
     fileName = sprintf('bispecd_video%d',idVideo);
-    fullpath = ['plots/' participantDir '/' fileName];
+    fullpath = ['plots/' participantDir '/' emotionLabel '/' fileName];
     print(f,fullpath,'-dpng','-r150')
     clf(f)
 end
 toc
+
+%% Histogram
+clc;
+
+M = fix(numSamples/16);
+freqBins = rate/2^(nextpow2(M))
+overlap = 10
+
+numParticipants = 32;
+numChannels = 20; % max 32
+numVideo = 40;    % max 40
+numLabels = 4;
+
+% keep track number of occurences of coupling bispectrum frequencies (f1,f2)
+maxFrequencies = numVideo*numParticipants; % max possible
+freqChannel = -1. .* ones(numChannels,numLabels,2,maxFrequencies); % preallocate
+count = zeros(numChannels,numLabels);
+
+for idParticipant = 1:numParticipants
+    fprintf('Participant ID: %d\n',idParticipant)
+    for idVideo = 1:numVideo 
+        for idChannel = 11:numChannels
+            fprintf('%d,',idChannel)
+            [fullsignal,bands] = loadAndDecomposeDEAP(deapPath,idParticipant,idVideo,idChannel);
+            emotionLabel = fullsignal.label;
+            clear waxis bands
+            [bisp, waxis,zeroPos] = bispecd(fullsignal.samples,'nfft',0,M,rate,overlap,0);
+            clear fullsignal magnBisp
+            magnBisp = abs(bisp(zeroPos:end,zeroPos:end));
+            clear bisp
+
+            % find peak
+            [row,col,value] = maxMatrix(magnBisp);
+            x = waxis(row+zeroPos-1);
+            y = waxis(col+zeroPos-1);
+            z = magnBisp(row,col);
+
+            if emotionLabel == "HVHA"
+                label = 1;
+            elseif emotionLabel == "LVHA"
+                label = 2;
+            elseif emotionLabel == "HVLA"
+                label = 3;
+            elseif emotionLabel == "LVLA"
+                label = 4;
+            end
+
+            % count occurences of coupling frequencies
+            count(idChannel,label) = count(idChannel,label) + 1;
+            iter = count(idChannel,label);
+            freqChannel(idChannel,label,1,iter) = x;
+            freqChannel(idChannel,label,2,iter) = y;
+        end
+        fprintf('\nVideo ID: %d | Emotion Label: %s\n',idVideo,emotionLabel)
+    end
+end
+
+labels = ["HVHA" "LVHA" "HVLA" "LVLA"];
+eval('mkdir plots')
+eval('mkdir plots/histo')
+
+% calculate histogram and export plots
+for idChannel = 11:numChannels
+    channelName = sprintf('channel_%d',idChannel);
+    eval(['mkdir plots/histo/' channelName])
+    for idLabel = 1:4
+        % remove redudant preallocated frequencies
+        k = find(freqChannel(idChannel,idLabel,1,:) == -1,1);
+
+        %f = figure;
+        f = figure('visible','off');
+        set(gcf, 'Position', get(0, 'Screensize')); % maximize figure
+
+        x = squeeze(freqChannel(idChannel,idLabel,1,1:k-1));
+        y = squeeze(freqChannel(idChannel,idLabel,2,1:k-1));
+        freqRange = 0:0.25:15;
+        hist3([x, y],'CDataMode','auto','Ctrs',{freqRange freqRange});
+        h = hist3([x, y],'CDataMode','auto','Ctrs',{freqRange freqRange});
+        %histogram2(x,y,0:0.25:15,0:0.25:15,'DisplayStyle','tile');
+        
+        % get the most frequent element
+        [row,col,value] = maxMatrix(h);
+        f1 = (row-1)*0.25;
+        f2 = (col-1)*0.25;
+        
+        title(labels(idLabel))
+        xticks(sort([0:1:15 f1]));yticks(sort([0:1:15 f2]))
+        xlabel('f1');ylabel('f2')
+        colorbar
+        view(2)
+
+        %print(fullpath,'-dpng','-r150')
+        fullpath = sprintf('plots/histo/%s/%s.png',channelName,labels(idLabel));
+        exportgraphics(gcf,fullpath,'ContentType','image')
+        clf(f)
+    end
+end
