@@ -90,7 +90,7 @@ toc
 %[bicod, waxis] = bicoher(samples,nfft,0,M,rate,overlap,display);
 %toc
 
-% frequency spectrum
+% frequency spectrum (todo: welch method)
 % nfft = 2^nextpow2(numel(samples))
 % psd = abs(fftshift(fft(samples)));
 % fshift = [-nfft/2:nfft/2-1]'*rate/nfft;
@@ -100,7 +100,7 @@ toc
 
 fprintf('Bispectrum Direct finished ...\nWaiting for the plots ...\n')
 
-%% Bulk Analysis Per Participant Full Signal Bispectrum Direct
+%% Bulk Analysis Per Participant Bispectrum Direct
 % 
 % NOTES:
 % 1. This would probably take a long time! Here we will try to implement a
@@ -180,7 +180,10 @@ for idVideo = 1:numVideo
 end
 toc
 
-%% Histogram
+%% Bulk visualization per channel
+
+
+%% Histogram coupling frequencies per channel
 clc;
 
 M = fix(numSamples/16);
@@ -188,7 +191,7 @@ freqBins = rate/2^(nextpow2(M))
 overlap = 10
 
 numParticipants = 32;
-numChannels = 20; % max 32
+numChannels = 32; % max 32
 numVideo = 40;    % max 40
 numLabels = 4;
 
@@ -200,7 +203,7 @@ count = zeros(numChannels,numLabels);
 for idParticipant = 1:numParticipants
     fprintf('Participant ID: %d\n',idParticipant)
     for idVideo = 1:numVideo 
-        for idChannel = 11:numChannels
+        for idChannel = 21:numChannels
             fprintf('%d,',idChannel)
             [fullsignal,bands] = loadAndDecomposeDEAP(deapPath,idParticipant,idVideo,idChannel);
             emotionLabel = fullsignal.label;
@@ -241,7 +244,7 @@ eval('mkdir plots')
 eval('mkdir plots/histo')
 
 % calculate histogram and export plots
-for idChannel = 11:numChannels
+for idChannel = 21:numChannels
     channelName = sprintf('channel_%d',idChannel);
     eval(['mkdir plots/histo/' channelName])
     for idLabel = 1:4
