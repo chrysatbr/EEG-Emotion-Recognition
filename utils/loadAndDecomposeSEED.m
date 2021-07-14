@@ -62,9 +62,10 @@ motherWavelet = 'db5';
 numLevels = 5;
 
 % Coefficients
-%[c,l] = wavedec(X,N,Lo_D,Hi_D) returns the decomposition structure as above, given the low- and high-pass decomposition filters you specify
+% TODO: Frequency rate for SEED is 200 and not 128. The DWT levels should be 
+% revised or to find another signal decomposition technique
 [c,l] = wavedec(fullsignal.samples,numLevels,motherWavelet);
-[gamma.coeff,beta.coeff,alpha.coeff,theta.coeff] = detcoef(c,l,[1 2 3 4]);
+[gamma.coeff,beta.coeff,alpha.coeff,theta.coeff] = detcoef(c,l,[2 3 4 5]);
 delta.coeff = appcoef(c,l,motherWavelet);
 
 delta.level = 5; theta.level = 5; alpha.level = 4; beta.level = 3; gamma.level = 2;
