@@ -218,13 +218,17 @@ for idParticipant = 1:numParticipants
             x = waxis(row+zeroPos-1);
             y = waxis(col+zeroPos-1);
             z = magnBisp(row,col);
-
+            
+            %High Valence-High Arousal (Happy 1o)
             if emotionLabel == "HVHA"
                 label = 1;
+            % Low Valence—High Arousal (Surprise 4o)
             elseif emotionLabel == "LVHA"
                 label = 2;
+            %High Valence—Low Arousal (angry & disgust 2o)
             elseif emotionLabel == "HVLA"
                 label = 3;
+            %Low Valence—Low Arousal (Fear & Sad 3o)
             elseif emotionLabel == "LVLA"
                 label = 4;
             end
