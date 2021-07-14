@@ -80,7 +80,7 @@ gamma.samples = wrcoef('d',c,l,motherWavelet,gamma.level);
 % Coefficients
 [c,l] = wavedec(fullsignal.baseline,numLevels,motherWavelet);
 [gamma.coeffBase,beta.coeffBase,alpha.coeffBase,theta.coeffBase] = detcoef(c,l,[1 2 3 4]);
-delta.coeff = appcoef(c,l,motherWavelet);
+delta.coeffBase = appcoef(c,l,motherWavelet);
 
 % Reconstructing coefficients to time domain
 delta.baseline = wrcoef('a',c,l,motherWavelet,delta.level);
