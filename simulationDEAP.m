@@ -99,7 +99,6 @@ toc
 % figure
 % plot(fshift,psd);
 
-
 fprintf('Bispectrum Direct finished ...\nWaiting for the plots ...\n')
 
 %% Bulk Analysis Per Participant Bispectrum Direct
@@ -119,12 +118,12 @@ fprintf('Bispectrum Direct finished ...\nWaiting for the plots ...\n')
 
 clc;
 
-idParticipant = 5;
+idParticipant = 2;
 fprintf('Bulk visualization per participant with id: %d ... \n',idParticipant)
 
 % create folders to save plots
 eval('mkdir plots')
-participantDir = sprintf('participant_%d/bispectrum',idParticipant);
+participantDir = sprintf('participant_%d/',idParticipant);
 eval(['mkdir plots/' participantDir])
 eval(['mkdir plots/' participantDir '/HVHA'])
 eval(['mkdir plots/' participantDir '/LVHA'])
@@ -176,7 +175,7 @@ for idVideo = 1:numVideo
     sgtitle(text);
     
     fileName = sprintf('bispecd_video%d',idVideo);
-    fullpath = ['plots/' participantDir '/' emotionLabel '/' fileName];
+    fullpath = sprintf('plots/%s/%s/bispecd_video%d',participantDir,emotionLabel,idVideo);
     print(f,fullpath,'-dpng','-r150')
     clf(f)
 end
@@ -204,7 +203,7 @@ count = zeros(numChannels,numLabels);
 for idParticipant = 1:numParticipants
     fprintf('Participant ID: %d\n',idParticipant)
     for idVideo = 1:numVideo 
-        for idChannel = 21:numChannels
+        for idChannel = 1:numChannels
             fprintf('%d,',idChannel)
             [fullsignal,bands] = loadAndDecomposeDEAP(deapPath,idParticipant,idVideo,idChannel);
             emotionLabel = fullsignal.label;
@@ -244,8 +243,8 @@ labels = ["HVHA" "LVHA" "HVLA" "LVLA"];
 eval('mkdir plots')
 eval('mkdir plots/histo')
 
-% calculate histogram and export plots
-for idChannel = 21:numChannels
+% compute histogram and export plots
+for idChannel = 1:numChannels
     channelName = sprintf('channel_%d',idChannel);
     eval(['mkdir plots/histo/' channelName])
     for idLabel = 1:4
