@@ -283,3 +283,24 @@ for idChannel = 1:numChannels
         clf(f)
     end
 end
+
+%% qpcotr bispectrum calculation
+%clc;
+fprintf('Qpctor bispectrum calculation started ...\n')
+
+% Available options to pass: 
+% 'fullsignal','gamma','beta','alpha','theta','delta' 
+signalToTest = fullsignal;
+
+samples = signalToTest.samples;
+sp = (samples-mean(samples))/std(samples);
+maxlag = fix(M/10);
+ar_order = 29;
+nfft = 512;
+M = fix(numel(samples)/8);
+overlap = 0;
+flag = 'unbiased'; %or 'biased'
+
+tic
+[ar_vec,bspec] = qpctor(sp,maxlag,ar_order,nfft,M,overlap,flag);
+toc
