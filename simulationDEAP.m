@@ -293,11 +293,11 @@ fprintf('Qpctor bispectrum calculation started ...\n')
 signalToTest = fullsignal;
 
 samples = signalToTest.samples;
+M = fix(numel(samples)/8);
 sp = (samples-mean(samples))/std(samples);
 maxlag = fix(M/10);
 ar_order = 29;
 nfft = 512;
-M = fix(numel(samples)/8);
 overlap = 0;
 flag = 'unbiased'; %or 'biased'
 
