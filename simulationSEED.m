@@ -23,8 +23,8 @@ rate = 200;
 
 %% SEED Load Single Analysis
 idParticipant = 10;  % range 1-15
-idSession = 3;      % range 1-3
-idVideo = 7;        % range 1-15
+idSession = 3;       % range 1-3
+idVideo = 7;         % range 1-15
 idChannel = 60;      % range 1-62
 [fullsignal,bands] = loadAndDecomposeSEED(seedPath,idParticipant,idSession,idVideo,idChannel);
 gamma = bands(1); beta= bands(2); alpha = bands(3); theta = bands(4); delta = bands(5);

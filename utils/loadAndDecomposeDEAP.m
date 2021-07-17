@@ -55,6 +55,7 @@ fullsignal.label = emotionQuarter;
 
 % extract baseline 3 seconds (384 points * 1/128 = 3 seconds)
 fullsignal.baseline = fullsignal.data(1:384);
+%fullsignal.samples = fullsignal.data(384*10+1:end); % last 30 seconds
 fullsignal.samples = fullsignal.data(385:end);
 
 % Discrete Wavelet Decomposition
@@ -80,7 +81,7 @@ gamma.samples = wrcoef('d',c,l,motherWavelet,gamma.level);
 % Coefficients
 [c,l] = wavedec(fullsignal.baseline,numLevels,motherWavelet);
 [gamma.coeffBase,beta.coeffBase,alpha.coeffBase,theta.coeffBase] = detcoef(c,l,[1 2 3 4]);
-delta.coeff = appcoef(c,l,motherWavelet);
+delta.coeffBase = appcoef(c,l,motherWavelet);
 
 % Reconstructing coefficients to time domain
 delta.baseline = wrcoef('a',c,l,motherWavelet,delta.level);
