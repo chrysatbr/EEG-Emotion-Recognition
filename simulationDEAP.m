@@ -304,3 +304,50 @@ flag = 'unbiased'; %or 'biased'
 tic
 [ar_vec,bspec] = qpctor(sp,maxlag,ar_order,nfft,M,overlap,flag);
 toc
+
+%% Comparison of bispectrum between full and baseline signal
+%clc;
+fprintf('Bispectrum Direct started ...\n')
+
+% Available options to pass: 
+% 'fullsignal','gamma','beta','alpha','theta','delta' 
+signalToTest = fullsignal;
+
+samples = signalToTest.samples;
+samples_b = signalToTest.baseline;
+M = fix(numel(samples)/8); 
+%M = 128;
+M_b = fix(numel(samples_b)/3);
+nfft = 2^nextpow2(M);
+nfft_b = 2^nextpow2(M_b);
+freqBins = 64/(nfft/2 - 1);
+freqBins_b = 64/(nfft_b/2 - 1);
+overlap = 50;
+display = 0;
+
+tic
+[Bspec, waxis,zeroPos] = bispecd(samples,nfft,0,M,rate,overlap,display);
+%[Bspec,waxis,zeroPos] = bispeci (samples,128,M, overlap,'unbiased', nfft, 1, display);
+[Bspec_b, waxis_b,zeroPos_b] = bispecd(samples_b,nfft_b,0,M_b,rate,overlap,display);
+toc
+
+sdf = [0 8 0 8;0 16 8 16;8 16 8 16;0 32 32 64];
+%choose region of bispectrum
+q=3;
+
+f1y = sdf(q,1);
+f2y = sdf(q,2);
+f1x = sdf(q,3);
+f2x = sdf(q,4);
+
+y=zeroPos+round(f1y/freqBins):zeroPos+round(f2y/freqBins);
+y_b = zeroPos_b+round(f1y/freqBins_b):zeroPos_b+round(f2y/freqBins_b);
+
+x=zeroPos+round(f1x/freqBins):zeroPos+round(f2x/freqBins);
+x_b = zeroPos_b+round(f1x/freqBins_b):zeroPos_b+round(f2x/freqBins_b);
+
+contourf(waxis(x),waxis(y),abs(Bspec(y,x)))
+title('full signal')
+figure
+contourf(waxis_b(x_b),waxis_b(y_b),abs(Bspec_b(y_b,x_b)))
+title('baseline signal')
