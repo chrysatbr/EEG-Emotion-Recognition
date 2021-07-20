@@ -55,8 +55,8 @@ fullsignal.label = emotionQuarter;
 
 % extract baseline 3 seconds (384 points * 1/128 = 3 seconds)
 fullsignal.baseline = fullsignal.data(1:384);
-%fullsignal.samples = fullsignal.data(384*10+1:end); % last 30 seconds
-fullsignal.samples = fullsignal.data(385:end);
+fullsignal.samples = fullsignal.data(385:end); 
+%fullsignal.samples = fullsignal.data(385 + 128*30:end); % last 30 seconds
 
 % Discrete Wavelet Decomposition
 motherWavelet = 'db5';
@@ -89,6 +89,25 @@ theta.baseline = wrcoef('d',c,l,motherWavelet,theta.level);
 alpha.baseline = wrcoef('d',c,l,motherWavelet,alpha.level);
 beta.baseline  = wrcoef('d',c,l,motherWavelet,beta.level);
 gamma.baseline = wrcoef('d',c,l,motherWavelet,gamma.level);
+
+% specify significant frequency range per band (narrow down the plots)
+fullsignal.start = 0;
+fullsignal.finish = 64;
+
+gamma.start = 32;
+gamma.finish = 64;
+
+beta.start = 16;
+beta.finish = 32;
+
+alpha.start = 8;
+alpha.finish = 16;
+
+theta.start = 4;
+theta.finish = 8;
+
+delta.start = 0;
+delta.finish = 4;
 
 bands = {gamma beta alpha theta delta};
 end

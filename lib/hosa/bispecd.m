@@ -149,7 +149,7 @@ end
        zeroPos = nfft/2+1;
    else
        waxis = [-(nfft-1)/2:(nfft-1)/2]'*fs/nfft;
-       zeroPos = nfft/2;
+       zeroPos = (nfft-1)/2+1;
    end
 
    if display ~= 0
