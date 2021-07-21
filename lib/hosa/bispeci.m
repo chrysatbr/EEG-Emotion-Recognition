@@ -1,4 +1,4 @@
-function [Bspec,waxis] = bispeci (y,nlag,nsamp, overlap,flag, nfft, wind, display)
+function [Bspec,waxis,zeroPos] = bispeci (y,nlag,nsamp,fs,overlap,flag, nfft, wind, display)
 %BISPECI Bispectrum estimation using the indirect method. 
 %	[Bspec,waxis] = bispeci (y,nlag,segsamp,overlap,flag,nfft, wind)
 %	y       - data vector or time-series   
@@ -126,9 +126,11 @@ end
     Bspec = fftshift(Bspec);               % axes d and r; orig at ctr
     
     if (rem(nfft,2) == 0) 
-        waxis = [-nfft/2:(nfft/2-1)]/nfft; 
+        waxis = [-nfft/2:(nfft/2-1)]*fs/nfft; 
+        zeroPos = nfft/2+1;
     else
-        waxis = [-(nfft-1)/2:(nfft-1)/2]/nfft; 
+        waxis = [-(nfft-1)/2:(nfft-1)/2]*fs/nfft; 
+        zeroPos = (nfft-1)/2+1;
     end 
 
 %    hold off, clf 
@@ -139,8 +141,8 @@ end
         figure();
         subplot(211)
         hold on;
-        plot(waxis(nlag+1:end), waxis(nlag+1:end), 'color', 'red');
-        contour(waxis(nlag+1:end),waxis(nlag+1:end),abs(Bspec(nlag+1:end,nlag+1:end)),8), grid on 
+        plot(waxis(zeroPos:end), waxis(zeroPos:end), 'color', 'red');
+        contour(waxis(zeroPos:end),waxis(zeroPos:end),abs(Bspec(zeroPos:end,zeroPos:end)),8), grid on 
         colorbar;
 
         if (wind == -1)
@@ -153,7 +155,7 @@ end
 
         subplot(212)
         % plot the primary area
-        mesh(waxis((nfft-1)/2+1:end),waxis((nfft-1)/2+1:end),abs(Bspec((nfft-1)/2+1:end,(nfft-1)/2+1:end))), grid on
+        mesh(waxis(zeroPos:end),waxis(zeroPos:end),abs(Bspec(zeroPos:end,zeroPos:end))), grid on
         colorbar;
         xlabel('f1'), ylabel('f2') 
         set(gcf,'Name','Hosa BISPECI')
