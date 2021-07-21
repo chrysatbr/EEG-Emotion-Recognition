@@ -324,8 +324,8 @@ for idBand = 1:numel(signalToTestMat)
     exportBoxplotOutliers(squeeze(rawMax(idBand,:,:)),'rawMax_no_outliers',channelName);
 
     exportBoxplotOutliers(squeeze(normDivMean(idBand,:,:)),'normDivMean_no_outliers',channelName);
-    exportBoxplotOutliers(squeeze(normSignalMean(idBand,:,:)),'normSignalMax_no_outliers',channelName);
-    exportBoxplotOutliers(squeeze(rawMean(idBand,:,:)),'normMeanMax_no_outliers',channelName);
+    exportBoxplotOutliers(squeeze(normSignalMean(idBand,:,:)),'normSignalMean_no_outliers',channelName);
+    exportBoxplotOutliers(squeeze(rawMean(idBand,:,:)),'normMean_no_outliers',channelName);
 
     exportBoxplotOutliers(squeeze(normDivStd(idBand,:,:)),'normDivStd_no_outliers',channelName);
     exportBoxplotOutliers(squeeze(normSignalStd(idBand,:,:)),'normSignalStd_no_outliers',channelName);
@@ -351,8 +351,8 @@ for idBand = 1:numel(signalToTestMat)
     exportBoxplot(squeeze(rawMax(idBand,:,:)),'rawMax',channelName);
 
     exportBoxplot(squeeze(normDivMean(idBand,:,:)),'normDivMean',channelName);
-    exportBoxplot(squeeze(normSignalMean(idBand,:,:)),'normSignalMax',channelName);
-    exportBoxplot(squeeze(rawMean(idBand,:,:)),'normMeanMax',channelName);
+    exportBoxplot(squeeze(normSignalMean(idBand,:,:)),'normSignalMean',channelName);
+    exportBoxplot(squeeze(rawMean(idBand,:,:)),'normMean',channelName);
 
     exportBoxplot(squeeze(normDivStd(idBand,:,:)),'normDivStd',channelName);
     exportBoxplot(squeeze(normSignalStd(idBand,:,:)),'normSignalStd',channelName);
