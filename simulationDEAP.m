@@ -351,3 +351,105 @@ title('full signal')
 figure
 contourf(waxis_b(x_b),waxis_b(y_b),abs(Bspec_b(y_b,x_b)))
 title('baseline signal')
+
+%% peak dif
+%clc;
+
+numParticipants = 1;
+numChannels = 2;  % max 32
+numVideo = 40;     % max 40
+numLabels = 4;
+% FP1 FP2 AF3 AF4  F7 T7 P7 O1 0z O2 P8 CP6 T8 F8 Cz
+%channelRange = [1 2 4 8 12 14 15 17 18 21 24 26 27 30 32]
+channelRange = [1 2];
+stringLabels = ["HVHA" "LVHA" "HVLA" "LVLA"];
+
+
+M = 1024; 
+%M = 128;
+M_b = 384/3;
+nfft = 2^nextpow2(M);
+nfft_b = 2^nextpow2(M_b);
+freqBins = 64/(nfft/2 - 1);
+freqBins_b = 64/(nfft_b/2 - 1);
+overlap = 50;
+display = 0;
+
+
+freqBand = [0 8 4 8;0 13 8 13;0 32 13 32;0 32 32 64];
+
+euclideanD = zeros(4,4,numChannels*numVideo,numChannels,numParticipants);
+
+
+
+
+for idParticipant = 1:numParticipants
+    fprintf('Participant %d\n',idParticipant)
+    countPerLabel = zeros(numLabels,1);
+    for idVideo = 1:numVideo 
+       for idChannel = channelRange
+        [fullsignal,bands] = loadAndDecomposeDEAP(deapPath,idParticipant,idVideo,idChannel);
+        emotionLabel = fullsignal.label;
+        
+         signalToTest = fullsignal;
+         samples = signalToTest.samples;
+         baseline = signalToTest.baseline;
+         
+         if emotionLabel == "HVHA"
+                label = 1;
+            elseif emotionLabel == "LVHA"
+                label = 2;
+            elseif emotionLabel == "HVLA"
+                label = 3;
+            elseif emotionLabel == "LVLA"
+                label = 4;
+         end
+         countPerLabel(label) = countPerLabel(label) + 1;
+         
+         [Bspec, waxis,zeroPos] = bispecd(samples,nfft,0,M,rate,overlap,display);
+         [Bspec_b, waxis_b,zeroPos_b] = bispecd(baseline,nfft_b,0,M_b,rate,overlap,display);
+         clear triaBisp triaBisp_b partS partB 
+         triaBisp=triu(flip(tril(flip(abs(Bspec(zeroPos:end,zeroPos:end))))));
+         triaBisp_b=triu(flip(tril(flip(abs(Bspec_b(zeroPos_b:end,zeroPos_b:end))))));
+          
+         for ind =1:4
+             f1y = round(freqBand(ind,1)/freqBins); f1y_b = round(freqBand(ind,1)/freqBins_b);
+             f2y = round(freqBand(ind,2)/freqBins); f2y_b = round(freqBand(ind,2)/freqBins_b);
+             f1x = round(freqBand(ind,3)/freqBins); f1x_b = round(freqBand(ind,3)/freqBins_b);
+             f2x = round(freqBand(ind,4)/freqBins); f2x_b = round(freqBand(ind,4)/freqBins_b);
+             
+             partS = triaBisp(1+f1y:1+f2y,1+f1x:1+f2x);
+             partB = triaBisp_b(1+f1y_b:1+f2y_b,1+f1x_b:1+f2x_b);
+             smax = max(partS(:));
+             [srow,scol] = find(triaBisp(1+f1y:1+f2y,1+f1x:1+f2x) == smax);
+             bmax = max(partB(:));
+             [brow,bcol] = find(triaBisp_b(1+f1y_b:1+f2y_b,1+f1x_b:1+f2x_b) == bmax);
+             srow = freqBand(ind,1)+round(srow*freqBins);
+             scol = freqBand(ind,3)+round(scol*freqBins);
+             brow = freqBand(ind,1)+round(brow*freqBins_b);
+             bcol = freqBand(ind,3)+round(bcol*freqBins_b);
+             euclideanD(label,ind,countPerLabel(label),idChannel,idParticipant) = sqrt((srow-brow)^2 + (scol-bcol)^2);
+
+             
+         end
+       end
+    end
+end
+for idParticipant = 1:numParticipants
+    for label = 1:4
+        for idChannel = channelRange
+        meandif.Theta(label,idChannel,idParticipant) = mean(nonzeros(euclideanD(label,1,:,idChannel,idParticipant)));
+        stddif.Theta(label,idChannel,idParticipant) = std(nonzeros(euclideanD(label,1,:,idChannel,idParticipant)));
+        
+        meandif.Alpha(label,idChannel,idParticipant) = mean(nonzeros(euclideanD(label,2,:,idChannel,idParticipant)));
+        stddif.Alpha(label,idChannel,idParticipant) = std(nonzeros(euclideanD(label,2,:,idChannel,idParticipant)));
+        
+        meandif.Beta(label,idChannel,idParticipant) = mean(nonzeros(euclideanD(label,3,:,idChannel,idParticipant)));
+        stddif.Beta(label,idChannel,idParticipant) = std(nonzeros(euclideanD(label,3,:,idChannel,idParticipant)));
+        
+        meandif.Gamma(label,idChannel,idParticipant) = mean(nonzeros(euclideanD(label,4,:,idChannel,idParticipant)));
+        stddif.Gamma(label,idChannel,idParticipant) = std(nonzeros(euclideanD(label,4,:,idChannel,idParticipant)));
+        end
+    end
+end
+     
