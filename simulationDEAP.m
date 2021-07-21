@@ -452,3 +452,27 @@ for idParticipant = 1:numParticipants
         end
     end
 end
+
+%% deconvolution of signal
+
+%den bgazei kalo apotelesma. ta noumera einai gia participant = 30, idVideo = 1 ,idChannel = electrodes.Fp2;
+samples = fullsignal.samples(end-30*128+1:end);
+[pxx f] = pwelch(samples,512,256,512,rate);
+pxx = pxx/max(pxx);
+semilogy(f,pxx)
+%[pxx f] = pwelch(fullsignal.baseline,128,64,128,rate);
+
+
+f1 = [4.5 10 22 39.75 43.25];
+testSignal = zeros(1,128);
+for i = 1:numel(f1)
+testSignal(1,round(2*f1(i))) = pxx(1+round(f1(i)*numel(pxx)/65));
+end
+for i = 0:29
+    testSignal2(1,128*i+1:128*i+128) = testSignal(1:128);
+end
+% improvement of signal: check for qpc on bispectrum, contrust random
+% phases on signals creating a qpc and quadratic phase couple them
+
+[hest,ceps] = bicepsf (samples,256,512, 50,'unbiased', 512, 0);
+x = conv(testSignal,hest,'same');
