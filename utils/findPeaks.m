@@ -12,6 +12,9 @@ function [bispPeaks,peakInfo] = findPeaks(bispPeaks,xOffset,freqBins)
     
     % max
     [yMax,xMax,value] = maxMatrix(bispPeaks);
+    peakInfo(1).f2 = (yMax-1)*freqBins;
+    peakInfo(1).f1 = (xMax-1)*freqBins + (xOffset-1)*freqBins;
+    peakInfo(1).value = value;
             
     % clear nearby peaks widthHertz x widthHertz Hz patch
     widthHertz = 1;
@@ -53,11 +56,5 @@ function [bispPeaks,peakInfo] = findPeaks(bispPeaks,xOffset,freqBins)
                 count = count + 1;
             end
         end
-    end
-    
-    if(numel(peakInfo) == 0)
-        peakInfo(1).f2 = (yMax-1)*freqBins;
-        peakInfo(1).f1 = (xMax-1)*freqBins + (xOffset-1)*freqBins;
-        peakInfo(1).value = value;
     end
 end

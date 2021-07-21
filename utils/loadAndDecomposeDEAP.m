@@ -90,7 +90,10 @@ alpha.baseline = wrcoef('d',c,l,motherWavelet,alpha.level);
 beta.baseline  = wrcoef('d',c,l,motherWavelet,beta.level);
 gamma.baseline = wrcoef('d',c,l,motherWavelet,gamma.level);
 
-% specify significant frequency range per band (narrow down the plots)
+% normalized signal subtracting the mean of the baseline
+fullsignal.norm = fullsignal.samples - mean(fullsignal.baseline);
+
+% specify significant frequency range per band
 fullsignal.start = 0;
 fullsignal.finish = 64;
 
@@ -108,6 +111,25 @@ theta.finish = 8;
 
 delta.start = 0;
 delta.finish = 4;
+
+% narrow down the plots
+fullsignal.plotStart = 2;
+fullsignal.plotFinish = 15;
+
+gamma.plotStart = 32;
+gamma.plotFinish = 43;
+
+beta.plotStart = 16;
+beta.plotFinish = 32;
+
+alpha.plotStart = 8;
+alpha.plotFinish = 16;
+
+theta.plotStart = 4;
+theta.plotFinish = 8;
+
+delta.plotStart = 0;
+delta.plotFinish = 4;
 
 bands = {gamma beta alpha theta delta};
 end
