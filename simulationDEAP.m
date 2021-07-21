@@ -355,7 +355,7 @@ title('baseline signal')
 %% peak dif
 %clc;
 
-numParticipants = 1;
+numParticipants = 3;
 numChannels = 2;  % max 32
 numVideo = 40;     % max 40
 numLabels = 4;
@@ -364,9 +364,10 @@ numLabels = 4;
 channelRange = [1 2];
 stringLabels = ["HVHA" "LVHA" "HVLA" "LVLA"];
 
-M = 1024; 
+
+M = 512; 
 %M = 128;
-M_b = 384/3;
+M_b = 384;
 nfft = 2^nextpow2(M);
 nfft_b = 2^nextpow2(M_b);
 freqBins = 64/(nfft/2 - 1);
@@ -376,11 +377,14 @@ display = 0;
 
 freqBand = [0 8 4 8;0 13 8 13;0 32 13 32;0 32 32 64];
 
-euclideanD = zeros(4,4,numChannels*numVideo,numChannels,numParticipants);
+euclideanD = zeros(4,4,numVideo,numChannels,numParticipants);
+
+countPerLabel = zeros(numLabels,numChannels);
+
 
 for idParticipant = 1:numParticipants
     fprintf('Participant %d\n',idParticipant)
-    countPerLabel = zeros(numLabels,1);
+   
     for idVideo = 1:numVideo 
        for idChannel = channelRange
         [fullsignal,bands] = loadAndDecomposeDEAP(deapPath,idParticipant,idVideo,idChannel);
@@ -399,7 +403,7 @@ for idParticipant = 1:numParticipants
             elseif emotionLabel == "LVLA"
                 label = 4;
          end
-         countPerLabel(label) = countPerLabel(label) + 1;
+         countPerLabel(label,idChannel) = countPerLabel(label,idChannel) + 1;
          
          [Bspec, waxis,zeroPos] = bispecd(samples,nfft,0,M,rate,overlap,display);
          [Bspec_b, waxis_b,zeroPos_b] = bispecd(baseline,nfft_b,0,M_b,rate,overlap,display);
@@ -423,15 +427,17 @@ for idParticipant = 1:numParticipants
              scol = freqBand(ind,3)+round(scol*freqBins);
              brow = freqBand(ind,1)+round(brow*freqBins_b);
              bcol = freqBand(ind,3)+round(bcol*freqBins_b);
-             euclideanD(label,ind,countPerLabel(label),idChannel,idParticipant) = sqrt((srow-brow)^2 + (scol-bcol)^2);
+
+             euclideanD(label,ind,countPerLabel(label,idChannel),idChannel,idParticipant) = sqrt((srow-brow)^2 + (scol-bcol)^2);      
          end
        end
     end
 end
 
 for idParticipant = 1:numParticipants
-    for label = 1:4
-        for idChannel = channelRange
+    for idChannel = 1:numChannels
+        for label = 1:4
+        
         meandif.Theta(label,idChannel,idParticipant) = mean(nonzeros(euclideanD(label,1,:,idChannel,idParticipant)));
         stddif.Theta(label,idChannel,idParticipant) = std(nonzeros(euclideanD(label,1,:,idChannel,idParticipant)));
         
